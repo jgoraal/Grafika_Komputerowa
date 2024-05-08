@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <script type="text/javascript">
 var gl;
 var shaderProgram;
@@ -9,6 +9,48 @@ var vertexPositionBuffer;
 var vertexColorBuffer;
 var vertexCoordsBuffer;
 var vertexNormalBuffer;
+
+function MatrixTransposeInverse(m)
+        {
+          let r = [
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0
+            ];
+          r[0] = m[5]*m[10]*m[15] - m[5]*m[14]*m[11] - m[6]*m[9]*m[15] + m[6]*m[13]*m[11] + m[7]*m[9]*m[14] - m[7]*m[13]*m[10];
+          r[1] = -m[1]*m[10]*m[15] + m[1]*m[14]*m[11] + m[2]*m[9]*m[15] - m[2]*m[13]*m[11] - m[3]*m[9]*m[14] + m[3]*m[13]*m[10];
+          r[2] = m[1]*m[6]*m[15] - m[1]*m[14]*m[7] - m[2]*m[5]*m[15] + m[2]*m[13]*m[7] + m[3]*m[5]*m[14] - m[3]*m[13]*m[6];
+          r[3] = -m[1]*m[6]*m[11] + m[1]*m[10]*m[7] + m[2]*m[5]*m[11] - m[2]*m[9]*m[7] - m[3]*m[5]*m[10] + m[3]*m[9]*m[6];
+
+          r[4] = -m[4]*m[10]*m[15] + m[4]*m[14]*m[11] + m[6]*m[8]*m[15] - m[6]*m[12]*m[11] - m[7]*m[8]*m[14] + m[7]*m[12]*m[10];
+          r[5] = m[0]*m[10]*m[15] - m[0]*m[14]*m[11] - m[2]*m[8]*m[15] + m[2]*m[12]*m[11] + m[3]*m[8]*m[14] - m[3]*m[12]*m[10];
+          r[6] = -m[0]*m[6]*m[15] + m[0]*m[14]*m[7] + m[2]*m[4]*m[15] - m[2]*m[12]*m[7] - m[3]*m[4]*m[14] + m[3]*m[12]*m[6];
+          r[7] = m[0]*m[6]*m[11] - m[0]*m[10]*m[7] - m[2]*m[4]*m[11] + m[2]*m[8]*m[7] + m[3]*m[4]*m[10] - m[3]*m[8]*m[6];
+
+          r[8] = m[4]*m[9]*m[15] - m[4]*m[13]*m[11] - m[5]*m[8]*m[15] + m[5]*m[12]*m[11] + m[7]*m[8]*m[13] - m[7]*m[12]*m[9];
+          r[9] = -m[0]*m[9]*m[15] + m[0]*m[13]*m[11] + m[1]*m[8]*m[15] - m[1]*m[12]*m[11] - m[3]*m[8]*m[13] + m[3]*m[12]*m[9];
+          r[10] = m[0]*m[5]*m[15] - m[0]*m[13]*m[7] - m[1]*m[4]*m[15] + m[1]*m[12]*m[7] + m[3]*m[4]*m[13] - m[3]*m[12]*m[5];
+          r[11] = -m[0]*m[5]*m[11] + m[0]*m[9]*m[7] + m[1]*m[4]*m[11] - m[1]*m[8]*m[7] - m[3]*m[4]*m[9] + m[3]*m[8]*m[5];
+
+          r[12] = -m[4]*m[9]*m[14] + m[4]*m[13]*m[10] + m[5]*m[8]*m[14] - m[5]*m[12]*m[10] - m[6]*m[8]*m[13] + m[6]*m[12]*m[9];
+          r[13] = m[0]*m[9]*m[14] - m[0]*m[13]*m[10] - m[1]*m[8]*m[14] + m[1]*m[12]*m[10] + m[2]*m[8]*m[13] - m[2]*m[12]*m[9];
+          r[14] = -m[0]*m[5]*m[14] + m[0]*m[13]*m[6] + m[1]*m[4]*m[14] - m[1]*m[12]*m[6] - m[2]*m[4]*m[13] + m[2]*m[12]*m[5];
+          r[15] = m[0]*m[5]*m[10] - m[0]*m[9]*m[6] - m[1]*m[4]*m[10] + m[1]*m[8]*m[6] + m[2]*m[4]*m[9] - m[2]*m[8]*m[5];
+
+          var det = m[0]*r[0] + m[1]*r[4] + m[2]*r[8] + m[3]*r[12];
+          for (var i = 0; i < 16; i++) r[i] /= det;
+          
+          let rt = [ r[0], r[4], r[8], r[12],
+                     r[1], r[5], r[9], r[13],
+                     r[2], r[6], r[10], r[14],
+                     r[3], r[7], r[11], r[15]
+                     ];
+          
+          return rt;
+        }
+
+
 
 function MatrixMul(a,b) //Mnożenie macierzy
 {
@@ -103,7 +145,7 @@ function CreateShpere(x,y,z,radius, numStepsElevation, numStepsAngle)
   
   let stepElevation = 90/numStepsElevation;
   let stepAngle = 360/numStepsAngle;
-  for(let elevation=-90; elevation< 90; elevation+= stepElevation)
+  for(let elevation=-90; elevation < 90; elevation+= stepElevation)
   {
     let radiusXZ = radius*Math.cos(elevation*Math.PI/180);
     let radiusY  = radius*Math.sin(elevation*Math.PI/180);
@@ -263,7 +305,7 @@ function startGL()
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormal), gl.STATIC_DRAW);
   vertexNormalBuffer.itemSize = 3;
   vertexNormalBuffer.numItems = vertexNormal.length/9;
-  
+
   
   textureBuffer = gl.createTexture();
   var textureImg = new Image();
@@ -274,7 +316,7 @@ function startGL()
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   }
-  textureImg.src="body.jpg"; //Nazwa obrazka
+  textureImg.src="Tex.png"; //Nazwa obrazka
   
   textureBuffer2 = gl.createTexture();
   var textureImg2 = new Image();
@@ -285,35 +327,11 @@ function startGL()
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   }
-  textureImg2.src="body2.jpg"; //Nazwa obrazka
+  textureImg2.src="Tex.png"; //Nazwa obrazka
 
-
-  textureBuffer3 = gl.createTexture();
-  var textureImg3 = new Image();
-  textureImg3.onload = function() { //Wykonanie kodu automatycznie po załadowaniu obrazka
-    gl.bindTexture(gl.TEXTURE_2D, textureBuffer3);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg3); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  }
-  textureImg3.src="gasienica.jpg"; //Nazwa obrazka
-
-
-  textureBuffer4 = gl.createTexture();
-  var textureImg4 = new Image();
-  textureImg4.onload = function() { //Wykonanie kodu automatycznie po załadowaniu obrazka
-    gl.bindTexture(gl.TEXTURE_2D, textureBuffer4);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg4); //Faktyczne załadowanie danych obrazu do pamieci karty graficznej
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //Ustawienie parametrów próbkowania tekstury
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  }
-  textureImg4.src="body3.jpg"; //Nazwa obrazka
-  
   //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
   let aspect = gl.viewportWidth/gl.viewportHeight;
-  let fov = 35.0 * Math.PI / 180.0; //Określenie pola widzenia kamery
+  let fov = 45.0 * Math.PI / 180.0; //Określenie pola widzenia kamery
   let zFar = 100.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
   let zNear = 0.1;
   uPMatrix = [
@@ -326,35 +344,25 @@ function startGL()
 } 
 //let angle = 45.0; //Macierz transformacji świata - określenie położenia kamery
 
-var angleZ = 0.0;
+var angleZ = 10.0;
 var angleY = 0.0;
 var angleX = 0.0;
-var tz = -7.0;
+var tz = -90.0;
 
-var object1x = 1.0;
+var object1x = 2.0;
 var object1y = 0.0;
 var object1z = -0.0;
 
-var object2x = 1.0;
+var object2x = -2.0*10.5;
 var object2y = 0.0;
-var object2z = -1.2;
+var object2z = -0.0;
 
-var object3x = 1.0;
-var object3y = 0.5;
-var object3z = 1.2;
+var scale1 = 1.0;
+var scale2 = 10.5;
 
-var object4x = 1.0;
-var object4y = 0.0;
-var object4z = -2.4;
-
-var scale1 = 0.4;
-var scale2 = 0.35;
-var scale3 = 0.42;
-var scale4 = 0.32;
-
-var lightX = 5;
-var lightY = 5;
-var lightZ = 60;
+var lightX = 10;
+var lightY = 0;
+var lightZ = 0;
 
 
 function Tick()
@@ -367,20 +375,6 @@ function Tick()
   ];
   
   let uMVMatrix2 = [
-  1,0,0,0, //Macierz jednostkowa
-  0,1,0,0,
-  0,0,1,0,
-  0,0,0,1
-  ];
-
-  let uMVMatrix3 = [
-  1,0,0,0, //Macierz jednostkowa
-  0,1,0,0,
-  0,0,1,0,
-  0,0,0,1
-  ];
-
-  let uMVMatrix4 = [
   1,0,0,0, //Macierz jednostkowa
   0,1,0,0,
   0,0,1,0,
@@ -428,20 +422,6 @@ function Tick()
   0,0,scale2,0,
   0,0,0,1
   ];
-
-  let uMVScale3 = [
-  scale3,0,0,0,
-  0,scale3,0,0,
-  0,0,scale3,0,
-  0,0,0,1
-  ];
-
-  let uMVScale4 = [
-  scale4,0,0,0,
-  0,scale4,0,0,
-  0,0,scale4,0,
-  0,0,0,1
-  ];
   
   let uMVObject1 = [
   1,0,0,0,
@@ -455,20 +435,6 @@ function Tick()
   0,1,0,0,
   0,0,1,0,
   object2x,object2y,object2z,1
-  ];
-
-  let uMVObject3 = [
-  1,0,0,0,
-  0,1,0,0,
-  0,0,1,0,
-  object3x,object3y,object3z,1
-  ];
-
-  let uMVObject4 = [
-  1,0,0,0,
-  0,1,0,0,
-  0,0,1,0,
-  object4x,object4y,object4z,1
   ];
   
   
@@ -485,20 +451,6 @@ function Tick()
   uMVMatrix2 = MatrixMul(uMVMatrix2,uMVRotY);
   uMVMatrix2 = MatrixMul(uMVMatrix2,uMVRotZ);
   uMVMatrix2 = MatrixMul(uMVMatrix2,uMVTranslateZ);
-
-  uMVMatrix3 = MatrixMul(uMVMatrix3,uMVScale3);
-  uMVMatrix3 = MatrixMul(uMVMatrix3,uMVObject3);
-  uMVMatrix3 = MatrixMul(uMVMatrix3,uMVRotX);
-  uMVMatrix3 = MatrixMul(uMVMatrix3,uMVRotY);
-  uMVMatrix3 = MatrixMul(uMVMatrix3,uMVRotZ);
-  uMVMatrix3 = MatrixMul(uMVMatrix3,uMVTranslateZ);
-
-  uMVMatrix4 = MatrixMul(uMVMatrix4,uMVScale4);
-  uMVMatrix4 = MatrixMul(uMVMatrix4,uMVObject4);
-  uMVMatrix4 = MatrixMul(uMVMatrix4,uMVRotX);
-  uMVMatrix4 = MatrixMul(uMVMatrix4,uMVRotY);
-  uMVMatrix4 = MatrixMul(uMVMatrix4,uMVRotZ);
-  uMVMatrix4 = MatrixMul(uMVMatrix4,uMVTranslateZ);
   
   //alert(uPMatrix);
   
@@ -512,6 +464,9 @@ function Tick()
   gl.enable(gl.DEPTH_TEST);           // Włączenie testu głębi - obiekty bliższe mają przykrywać obiekty dalsze
   gl.depthFunc(gl.LEQUAL);            // 
   
+  
+  
+
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uPMatrix"), false, new Float32Array(uPMatrix)); //Wgranie macierzy kamery do pamięci karty graficznej
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix1));
   
@@ -532,6 +487,8 @@ function Tick()
   gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexNormal"), vertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
   
   gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"),lightX,lightY,lightZ);
+
+  
   
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, textureBuffer);
@@ -542,18 +499,6 @@ function Tick()
   //Drugi Obiekt
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix2));
   gl.bindTexture(gl.TEXTURE_2D, textureBuffer2);
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-
-
-  //Trzeci Obiekt
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix3));
-  gl.bindTexture(gl.TEXTURE_2D, textureBuffer3);
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-
-
-  //Czwarty Obiekt
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, new Float32Array(uMVMatrix4));
-  gl.bindTexture(gl.TEXTURE_2D, textureBuffer4);
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
    
   setTimeout(Tick,100);
@@ -571,20 +516,18 @@ function handlekeydown(e)
  //alert(angleX);
  
  //U I O J K L
- if(e.keyCode==76) lightX=lightX+0.99999;
- if(e.keyCode==74) lightX=lightX-0.99999;
- if(e.keyCode==73) lightY=lightY+0.99999;
- if(e.keyCode==75) lightY=lightY-0.99999;
- if(e.keyCode==85) lightZ=lightZ+0.99999;
- if(e.keyCode==79) lightZ=lightZ-0.99999;
+ if(e.keyCode==76) lightX=lightX+0.1;
+ if(e.keyCode==74) lightX=lightX-0.1;
+ if(e.keyCode==73) lightY=lightY+0.1;
+ if(e.keyCode==75) lightY=lightY-0.1;
+ if(e.keyCode==85) lightZ=lightZ+0.1;
+ if(e.keyCode==79) lightZ=lightZ-0.1;
 }
 </script>
 </head>
 <body onload="startGL()" onkeydown="handlekeydown(event)">
 <canvas id="canvas3D" width="640" height="480" style="border: solid black 1px"></canvas>
-<img id="textureImg" src="body.jpg">
-<img id="textureImg2" src="gasienica.jpg">
-<img id="textureImg3" src="gasienica.jpg">
-<img id="textureImg4" src="body3.jpg">
+<img id="textureImg" src="Tex.png">
+<img id="textureImg2" src="Tex.png">
 </body>
 </html>
