@@ -223,6 +223,7 @@ function startGL()
     varying vec3 vNormal;
     uniform sampler2D uSampler;
     uniform vec3 uLightPosition;
+    uniform vec3 uColor;
     void main(void) {
        vec3 lightDirection = normalize(uLightPosition - vPos);
        float brightness = max(dot(vNormal,lightDirection), 0.0);
@@ -230,7 +231,7 @@ function startGL()
       //gl_FragColor = texture2D(uSampler,vTexUV)*vec4(vColor,1.0); //Odczytanie punktu tekstury i przypisanie go jako koloru danego punktu renderowaniej figury
       //gl_FragColor = vec4((vNormal+vec3(1.0,1.0,1.0))/2.0,1.0); 
       //gl_FragColor = clamp(texture2D(uSampler,vTexUV) * vec4(brightness,brightness,brightness,1.0),0.0,1.0);
-      gl_FragColor = clamp(vec4(1.0,1.0,0.0,1.0) * vec4(brightness,brightness,brightness,1.0),0.0,1.0);
+      gl_FragColor = clamp(vec4(uColor,1.0) * vec4(brightness,brightness,brightness,1.0),0.0,1.0);
     }
   `;
   let fragmentShader = gl.createShader(gl.FRAGMENT_SHADER); //Stworzenie obiektu shadera 
@@ -275,7 +276,7 @@ function startGL()
   
   //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
   let aspect = gl.viewportWidth/gl.viewportHeight;
-  let fov = 45.0 * Math.PI / 180.0; //Określenie pola widzenia kamery
+  let fov = 55.0 * Math.PI / 180.0; //Określenie pola widzenia kamery
   let zFar = 100.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
   let zNear = 0.1;
   uPMatrix = [
@@ -284,6 +285,8 @@ function startGL()
    0                         ,0                           ,-(zFar+zNear)/(zFar-zNear)  , -1,
    0                         ,0                           ,-(2*zFar*zNear)/(zFar-zNear) ,0.0,
   ];
+
+  requestAnimationFrame(animateWalk);
   Tick();
 } 
 //let angle = 45.0; //Macierz transformacji świata - określenie położenia kamery 
@@ -293,170 +296,358 @@ var angleY = 0.0;
 var angleX = 0.0;
 var KameraPositionZ = -8.0;
 
-var Object1PositionX = 0.0;
-var Object1PositionY = 0.0;
-var Object1PositionZ = 0.0;
+var HeadPositionX = 0.0;
+var HeadPositionY = 1.4;
+var HeadPositionZ = 0.0;
+var HeadSizeX = 0.4;
+var HeadSizeY = 0.4;
+var HeadSizeZ = 0.4;
+var HeadAngleZ = 0.0;
+var HeadAngleY = 0.0;
 
-var Object1AngleZ = 0.0;
+var BodyPositionX = 0.0;
+var BodyPositionY = 0.0;
+var BodyPositionZ = 0.0;
+var BodySizeX = 0.6;
+var BodySizeY = 1.0;
+var BodySizeZ = 0.4;
+var BodyAngleZ = 0.0;
 
-var Object2PositionX = 1.0;
-var Object2PositionY = 0.0;
-var Object2PositionZ = 0.0;
+var LeftUpperArmPositionX = -0.8;
+var LeftUpperArmPositionY = 0.3;
+var LeftUpperArmPositionZ = 0.0;
+var LeftUpperArmSizeX = 0.2;
+var LeftUpperArmSizeY = 0.5;
+var LeftUpperArmSizeZ = 0.2;
+var LeftUpperArmAngleZ = 0.0;
+var LeftUpperArmAngleX = 0.0;
+var LeftUpperArmAngleY = 0.0;
 
-var Object2AngleZ = 0.0;
+var LeftLowerArmPositionX = 0.0;
+var LeftLowerArmPositionY = -0.4;
+var LeftLowerArmPositionZ = 0.2;
+var LeftLowerArmSizeX = 0.2;
+var LeftLowerArmSizeY = 0.5;
+var LeftLowerArmSizeZ = 0.2;
+var LeftLowerArmAngleZ = 0.0;
+var LeftLowerArmAngleX = -10.0;
 
-var Object3PositionX = 1.0;
-var Object3PositionY = 0.0;
-var Object3PositionZ = 0.0;
+var RightUpperArmPositionX = 0.8;
+var RightUpperArmPositionY = 0.3;
+var RightUpperArmPositionZ = 0.0;
+var RightUpperArmSizeX = 0.2;
+var RightUpperArmSizeY = 0.5;
+var RightUpperArmSizeZ = 0.2;
+var RightUpperArmAngleZ = 0.0;
+var RightUpperArmAngleX = 0.0;
+var RightUpperArmAngleY = 0.0;
 
-var Object3AngleZ = 0.0;
+var RightLowerArmPositionX = 0.0;
+var RightLowerArmPositionY = -0.4;
+var RightLowerArmPositionZ = 0.2;
+var RightLowerArmSizeX = 0.2;
+var RightLowerArmSizeY = 0.5;
+var RightLowerArmSizeZ = 0.2;
+var RightLowerArmAngleZ = 0.0;
+var RightLowerArmAngleX = -10.0;
 
-var LightSize = 0.1;
-var Object1Sizedx = 1.0;
-var Object1Sizedy = 0.2;
-var Object1Sizedz = 0.1;
-var Object2Sizedx = 1.0;
-var Object2Sizedy = 0.2;
-var Object2Sizedz = 0.1;
-var Object3Sizedx = 0.4;
-var Object3Sizedy = 0.2;
-var Object3Sizedz = 0.1;
+var LeftUpperLegPositionX = -0.4;
+var LeftUpperLegPositionY = -1.3;
+var LeftUpperLegPositionZ = 0.0;
+var LeftUpperLegSizeX = 0.2;
+var LeftUpperLegSizeY = 0.5;
+var LeftUpperLegSizeZ = 0.2;
+var LeftUpperLegAngleZ = 0.0;
+var LeftUpperLegAngleX = 0.0;
+var LeftUpperLegAngleY = 0.0;
+
+var LeftLowerLegPositionX = 0.0;
+var LeftLowerLegPositionY = -0.35;
+var LeftLowerLegPositionZ = 0.0;
+var LeftLowerLegSizeX = 0.2;
+var LeftLowerLegSizeY = 0.5;
+var LeftLowerLegSizeZ = 0.2;
+var LeftLowerLegAngleZ = 0.0;
+var LeftLowerLegAngleX = 0.0;
+
+var RightUpperLegPositionX = 0.4;
+var RightUpperLegPositionY = -1.3;
+var RightUpperLegPositionZ = 0.0;
+var RightUpperLegSizeX = 0.2;
+var RightUpperLegSizeY = 0.5;
+var RightUpperLegSizeZ = 0.2;
+var RightUpperLegAngleZ = 0.0;
+var RightUpperLegAngleX = 0.0;
+var RightUpperLegAngleY = 0.0;
+
+var RightLowerLegPositionX = 0.0;
+var RightLowerLegPositionY = -0.35;
+var RightLowerLegPositionZ = 0.0;
+var RightLowerLegSizeX = 0.2;
+var RightLowerLegSizeY = 0.5;
+var RightLowerLegSizeZ = 0.2;
+var RightLowerLegAngleZ = 0.0;
+var RightLowerLegAngleX = 0.0;
 
 var LightPositionX = 0;
 var LightPositionY = 0;
 var LightPositionZ = 3;
+var LightSize = 0.1;
 
 
-function Tick()
-{ 
+
+function Tick() { 
   let uMMatrix0 = CreateIdentytyMatrix(); 
-  let uMMatrix1 = CreateIdentytyMatrix();
-  let uMMatrix2 = CreateIdentytyMatrix();
-  let uMMatrix3 = CreateIdentytyMatrix();
-  
+  let uMMatrixBody = CreateIdentytyMatrix();
+  let uMMatrixHead = CreateIdentytyMatrix();
+  let uMMatrixLeftUpperArm = CreateIdentytyMatrix();
+  let uMMatrixLeftLowerArm = CreateIdentytyMatrix();
+  let uMMatrixRightUpperArm = CreateIdentytyMatrix();
+  let uMMatrixRightLowerArm = CreateIdentytyMatrix();
+  let uMMatrixLeftUpperLeg = CreateIdentytyMatrix();
+  let uMMatrixLeftLowerLeg = CreateIdentytyMatrix();
+  let uMMatrixRightUpperLeg = CreateIdentytyMatrix();
+  let uMMatrixRightLowerLeg = CreateIdentytyMatrix();
+
   let uVMatrix = CreateIdentytyMatrix();
   
+  uVMatrix = MatrixMul(uVMatrix, CreateRotationXMatrix(angleX));
+  uVMatrix = MatrixMul(uVMatrix, CreateRotationYMatrix(angleY));
+  uVMatrix = MatrixMul(uVMatrix, CreateRotationZMatrix(angleZ));
+  uVMatrix = MatrixMul(uVMatrix, CreateTranslationMatrix(0, 0, KameraPositionZ));
   
-  uVMatrix = MatrixMul(uVMatrix,CreateRotationXMatrix(angleX));
-  uVMatrix = MatrixMul(uVMatrix,CreateRotationYMatrix(angleY));
-  uVMatrix = MatrixMul(uVMatrix,CreateRotationZMatrix(angleZ));
-  uVMatrix = MatrixMul(uVMatrix,CreateTranslationMatrix(0,0,KameraPositionZ));
+  // Korpus
+  uMMatrixBody = MatrixMul(uMMatrixBody, CreateScaleMatrix(BodySizeX, BodySizeY, BodySizeZ));
+  uMMatrixBody = MatrixMul(uMMatrixBody, CreateRotationZMatrix(BodyAngleZ));
+  uMMatrixBody = MatrixMul(uMMatrixBody, CreateTranslationMatrix(BodyPositionX, BodyPositionY, BodyPositionZ));
+
+  // Głowa
+  uMMatrixHead = MatrixMul(uMMatrixHead, CreateScaleMatrix(HeadSizeX, HeadSizeY, HeadSizeZ));
+  uMMatrixHead = MatrixMul(uMMatrixHead, CreateRotationYMatrix(HeadAngleY));  // Rotacja głowy
+  uMMatrixHead = MatrixMul(uMMatrixHead, CreateTranslationMatrix(HeadPositionX, HeadPositionY, HeadPositionZ));
+
+  // Lewe ramię - górne
+  uMMatrixLeftUpperArm = MatrixMul(uMMatrixLeftUpperArm, CreateScaleMatrix(LeftUpperArmSizeX, LeftUpperArmSizeY, LeftUpperArmSizeZ));
+  uMMatrixLeftUpperArm = MatrixMul(uMMatrixLeftUpperArm, CreateRotationXMatrix(LeftUpperArmAngleX));
+  uMMatrixLeftUpperArm = MatrixMul(uMMatrixLeftUpperArm, CreateRotationZMatrix(LeftUpperArmAngleZ));
+  uMMatrixLeftUpperArm = MatrixMul(uMMatrixLeftUpperArm, CreateTranslationMatrix(LeftUpperArmPositionX, LeftUpperArmPositionY, LeftUpperArmPositionZ));
+
+  // Lewe ramię - dolne
+  uMMatrixLeftLowerArm = MatrixMul(uMMatrixLeftLowerArm, CreateScaleMatrix(LeftLowerArmSizeX, LeftLowerArmSizeY, LeftLowerArmSizeZ));
+  uMMatrixLeftLowerArm = MatrixMul(uMMatrixLeftLowerArm, CreateRotationXMatrix(LeftLowerArmAngleX));
+  uMMatrixLeftLowerArm = MatrixMul(uMMatrixLeftLowerArm, CreateRotationZMatrix(LeftLowerArmAngleZ));
+  uMMatrixLeftLowerArm = MatrixMul(uMMatrixLeftLowerArm, CreateTranslationMatrix(LeftLowerArmPositionX, LeftLowerArmPositionY, LeftLowerArmPositionZ));
+  uMMatrixLeftLowerArm = MatrixMul(uMMatrixLeftLowerArm, CreateTranslationMatrix(LeftUpperArmPositionX, LeftUpperArmPositionY - LeftUpperArmSizeY, LeftUpperArmPositionZ));
+
+  // Prawe ramię - górne
+  uMMatrixRightUpperArm = MatrixMul(uMMatrixRightUpperArm, CreateScaleMatrix(RightUpperArmSizeX, RightUpperArmSizeY, RightUpperArmSizeZ));
+  uMMatrixRightUpperArm = MatrixMul(uMMatrixRightUpperArm, CreateRotationXMatrix(RightUpperArmAngleX));
+  uMMatrixRightUpperArm = MatrixMul(uMMatrixRightUpperArm, CreateRotationZMatrix(RightUpperArmAngleZ));
+  uMMatrixRightUpperArm = MatrixMul(uMMatrixRightUpperArm, CreateTranslationMatrix(RightUpperArmPositionX, RightUpperArmPositionY, RightUpperArmPositionZ));
   
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateScaleMatrix(Object1Sizedx,Object1Sizedy,Object1Sizedz));
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateRotationZMatrix(Object1AngleZ));
-  uMMatrix1 = MatrixMul(uMMatrix1,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));  
+  // Prawe ramię - dolne
+  uMMatrixRightLowerArm = MatrixMul(uMMatrixRightLowerArm, CreateScaleMatrix(RightLowerArmSizeX, RightLowerArmSizeY, RightLowerArmSizeZ));
+  uMMatrixRightLowerArm = MatrixMul(uMMatrixRightLowerArm, CreateRotationXMatrix(RightLowerArmAngleX));
+  uMMatrixRightLowerArm = MatrixMul(uMMatrixRightLowerArm, CreateRotationZMatrix(RightLowerArmAngleZ));
+  uMMatrixRightLowerArm = MatrixMul(uMMatrixRightLowerArm, CreateTranslationMatrix(RightLowerArmPositionX, RightLowerArmPositionY, RightLowerArmPositionZ));
+  uMMatrixRightLowerArm = MatrixMul(uMMatrixRightLowerArm, CreateTranslationMatrix(RightUpperArmPositionX, RightUpperArmPositionY - RightUpperArmSizeY, RightUpperArmPositionZ));
+
+  // Lewa noga - udo
+  uMMatrixLeftUpperLeg = MatrixMul(uMMatrixLeftUpperLeg, CreateScaleMatrix(LeftUpperLegSizeX, LeftUpperLegSizeY, LeftUpperLegSizeZ));
+  uMMatrixLeftUpperLeg = MatrixMul(uMMatrixLeftUpperLeg, CreateRotationXMatrix(LeftUpperLegAngleX));
+  uMMatrixLeftUpperLeg = MatrixMul(uMMatrixLeftUpperLeg, CreateRotationZMatrix(LeftUpperLegAngleZ));
+  uMMatrixLeftUpperLeg = MatrixMul(uMMatrixLeftUpperLeg, CreateTranslationMatrix(LeftUpperLegPositionX, LeftUpperLegPositionY, LeftUpperLegPositionZ));
   
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateScaleMatrix(Object2Sizedx,Object2Sizedy,Object2Sizedz));
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object2Sizedx,0.0,0.0)); 
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateRotationZMatrix(Object2AngleZ));
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object2PositionX,Object2PositionY,Object2PositionZ));
+  // Lewa noga - piszczel
+  uMMatrixLeftLowerLeg = MatrixMul(uMMatrixLeftLowerLeg, CreateScaleMatrix(LeftLowerLegSizeX, LeftLowerLegSizeY, LeftLowerLegSizeZ));
+  uMMatrixLeftLowerLeg = MatrixMul(uMMatrixLeftLowerLeg, CreateRotationXMatrix(LeftLowerLegAngleX));
+  uMMatrixLeftLowerLeg = MatrixMul(uMMatrixLeftLowerLeg, CreateRotationZMatrix(LeftLowerLegAngleZ));
+  uMMatrixLeftLowerLeg = MatrixMul(uMMatrixLeftLowerLeg, CreateTranslationMatrix(LeftLowerLegPositionX, LeftLowerLegPositionY, LeftLowerLegPositionZ));
+  uMMatrixLeftLowerLeg = MatrixMul(uMMatrixLeftLowerLeg, CreateTranslationMatrix(LeftUpperLegPositionX, LeftUpperLegPositionY - LeftUpperLegSizeY, LeftUpperLegPositionZ));
+
+  // Prawa noga - udo
+  uMMatrixRightUpperLeg = MatrixMul(uMMatrixRightUpperLeg, CreateScaleMatrix(RightUpperLegSizeX, RightUpperLegSizeY, RightUpperLegSizeZ));
+  uMMatrixRightUpperLeg = MatrixMul(uMMatrixRightUpperLeg, CreateRotationXMatrix(RightUpperLegAngleX));
+  uMMatrixRightUpperLeg = MatrixMul(uMMatrixRightUpperLeg, CreateRotationZMatrix(RightUpperLegAngleZ));
+  uMMatrixRightUpperLeg = MatrixMul(uMMatrixRightUpperLeg, CreateTranslationMatrix(RightUpperLegPositionX, RightUpperLegPositionY, RightUpperLegPositionZ));
   
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateRotationZMatrix(Object1AngleZ));
-  uMMatrix2 = MatrixMul(uMMatrix2,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));
+  // Prawa noga - piszczel
+  uMMatrixRightLowerLeg = MatrixMul(uMMatrixRightLowerLeg, CreateScaleMatrix(RightLowerLegSizeX, RightLowerLegSizeY, RightLowerLegSizeZ));
+  uMMatrixRightLowerLeg = MatrixMul(uMMatrixRightLowerLeg, CreateRotationXMatrix(RightLowerLegAngleX));
+  uMMatrixRightLowerLeg = MatrixMul(uMMatrixRightLowerLeg, CreateRotationZMatrix(RightLowerLegAngleZ));
+  uMMatrixRightLowerLeg = MatrixMul(uMMatrixRightLowerLeg, CreateTranslationMatrix(RightLowerLegPositionX, RightLowerLegPositionY, RightLowerLegPositionZ));
+  uMMatrixRightLowerLeg = MatrixMul(uMMatrixRightLowerLeg, CreateTranslationMatrix(RightUpperLegPositionX, RightUpperLegPositionY - RightUpperLegSizeY, RightUpperLegPositionZ));
+
+
+  // Światło
+  uMMatrix0 = MatrixMul(uMMatrix0, CreateScaleMatrix(LightSize, LightSize, LightSize));
+  uMMatrix0 = MatrixMul(uMMatrix0, CreateTranslationMatrix(LightPositionX, LightPositionY, LightPositionZ));
   
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateScaleMatrix(Object3Sizedx,Object3Sizedy,Object3Sizedz));
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object3Sizedx,0.0,0.0)); 
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object3AngleZ));
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object3PositionX,Object3PositionY,Object3PositionZ));
-  
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object2Sizedx,0.0,0.0)); 
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object2AngleZ));
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object2PositionX,Object2PositionY,Object2PositionZ));
-  
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1Sizedx,0.0,0.0)); 
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateRotationZMatrix(Object1AngleZ));
-  uMMatrix3 = MatrixMul(uMMatrix3,CreateTranslationMatrix(Object1PositionX,Object1PositionY,Object1PositionZ));
-  
-  uMMatrix0 = MatrixMul(uMMatrix0,CreateScaleMatrix(LightSize,LightSize,LightSize));
-  uMMatrix0 = MatrixMul(uMMatrix0,CreateTranslationMatrix(LightPositionX,LightPositionY,LightPositionZ));
-  
-  //alert(uPMatrix);
-  
-  //Render Scene
+  // Renderowanie
   gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight); 
-  gl.clearColor(1.0,0.0,0.0,1.0); //Wyczyszczenie obrazu kolorem czerwonym
-  gl.clearDepth(1.0);             //Wyczyścienie bufora głebi najdalszym planem
+  gl.clearColor(1.0, 0.0, 0.0, 1.0); 
+  gl.clearDepth(1.0);             
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.useProgram(shaderProgram)   //Użycie przygotowanego programu shaderowego
+  gl.useProgram(shaderProgram);
   
-  gl.enable(gl.DEPTH_TEST);           // Włączenie testu głębi - obiekty bliższe mają przykrywać obiekty dalsze
-  gl.depthFunc(gl.LEQUAL);            // 
+  gl.enable(gl.DEPTH_TEST);           
+  gl.depthFunc(gl.LEQUAL);            
   
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uPMatrix"), false, new Float32Array(uPMatrix)); //Wgranie macierzy kamery do pamięci karty graficznej
+  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uPMatrix"), false, new Float32Array(uPMatrix)); 
   gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uVMatrix"), false, new Float32Array(uVMatrix));
-  gl.uniform1f(gl.getUniformLocation(shaderProgram, "uNormalMul"),1.0);
+  gl.uniform1f(gl.getUniformLocation(shaderProgram, "uNormalMul"), 1.0);
   
-  
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix1));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix1)));
-  
-  gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexPosition"));  //Przekazanie położenia
+  gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexPosition"));  
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
   gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexPosition"), vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
   
-  gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexNormal"));  //Przekazywanie wektorów normalnych
+  gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "aVertexNormal"));  
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffer);
   gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexNormal"), vertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
   
-  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"),LightPositionX,LightPositionY,LightPositionZ);
+  gl.uniform3f(gl.getUniformLocation(shaderProgram, "uLightPosition"), LightPositionX, LightPositionY, LightPositionZ);
   
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-  
-  //Drugi Obiekt
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix2));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix2)));
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-  
-  //Trzeci Obiekt
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix3));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix3)));
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-  
-  //Obiekt Światła
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrix0));
-  gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrix0)));
-  gl.uniform1f(gl.getUniformLocation(shaderProgram, "uNormalMul"),-1.0);  
-  gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-  
-  setTimeout(Tick,100);
+  // Korpus
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixBody));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixBody)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.0, 0.0, 1.0);  // Niebieski
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+// Głowa
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixHead));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixHead)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 1.0, 1.0, 1.0);  // Biały
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+// Lewe ramię - górne
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixLeftUpperArm));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixLeftUpperArm)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.0, 1.0, 0.0);  // Zielony
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+// Lewe ramię - dolne
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixLeftLowerArm));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixLeftLowerArm)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 1.0, 1.0, 0.0);  // Żółty
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+// Prawe ramię - górne
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixRightUpperArm));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixRightUpperArm)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.0, 1.0, 0.0);  // Zielony
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+// Prawe ramię - dolne
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixRightLowerArm));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixRightLowerArm)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 1.0, 1.0, 0.0);  // Żółty
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+// Lewa noga - udo
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixLeftUpperLeg));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixLeftUpperLeg)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 1.0, 0.5, 0.0);  // Pomarańczowy
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+// Lewa noga - piszczel
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixLeftLowerLeg));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixLeftLowerLeg)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.5, 0.0, 0.5);  // Fioletowy
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+// Prawa noga - udo
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixRightUpperLeg));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixRightUpperLeg)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 1.0, 0.5, 0.0);  // Pomarańczowy
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+// Prawa noga - piszczel
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMMatrix"), false, new Float32Array(uMMatrixRightLowerLeg));
+gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uInvMMatrix"), false, new Float32Array(MatrixTransposeInverse(uMMatrixRightLowerLeg)));
+gl.uniform3f(gl.getUniformLocation(shaderProgram, "uColor"), 0.5, 0.0, 0.5);  // Fioletowy
+gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems * vertexPositionBuffer.itemSize);
+
+  setTimeout(Tick, 100);
 }
-function handlekeydown(e)
-{
- // Q W E A S D
- if(e.keyCode==87) angleX=angleX+1.0; //W
- if(e.keyCode==83) angleX=angleX-1.0; //S
- if(e.keyCode==68) angleY=angleY+1.0;
- if(e.keyCode==65) angleY=angleY-1.0;
- if(e.keyCode==81) angleZ=angleZ+1.0;
- if(e.keyCode==69) angleZ=angleZ-1.0;
- //alert(e.keyCode);
- //alert(angleX);
- 
- //U I O J K L
- if(e.keyCode==76) LightPositionX=LightPositionX+0.1;
- if(e.keyCode==74) LightPositionX=LightPositionX-0.1;
- if(e.keyCode==73) LightPositionY=LightPositionY+0.1;
- if(e.keyCode==75) LightPositionY=LightPositionY-0.1;
- if(e.keyCode==85) LightPositionZ=LightPositionZ+0.1;
- if(e.keyCode==79) LightPositionZ=LightPositionZ-0.1;
- 
- //Z X
- if(e.keyCode==88) Object1AngleZ=Object1AngleZ-0.1;
- if(e.keyCode==90) Object1AngleZ=Object1AngleZ+0.1;
- 
- //C V
- if(e.keyCode==67) Object2AngleZ=Object2AngleZ-0.1;
- if(e.keyCode==86) Object2AngleZ=Object2AngleZ+0.1;
- 
- //B N
- if(e.keyCode==66) Object3AngleZ=Object3AngleZ-0.1;
- if(e.keyCode==78) Object3AngleZ=Object3AngleZ+0.1;
+
+
+var isWalking = false;
+var walkAngle = 0;
+var walkDirection = 1;
+var moveDistance = 0;
+
+
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', handleKeyUp);
+
+
+function animateWalk() {
+  if (isWalking) {
+    // Ruch rąk
+    LeftUpperArmAngleX = Math.sin(walkAngle) * 20;
+    RightUpperArmAngleX = -Math.sin(walkAngle) * 20;
+
+    LeftLowerArmAngleX = Math.sin(walkAngle) * 10 - 20;
+    RightLowerArmAngleX = -Math.sin(walkAngle) * 10 - 20;
+
+    // Ruch nóg
+    LeftUpperLegAngleX = -Math.sin(walkAngle) * 20;
+    RightUpperLegAngleX = Math.sin(walkAngle) * 20;
+
+    LeftLowerLegAngleX = -Math.sin(walkAngle) * 10 + 20;
+    RightLowerLegAngleX = Math.sin(walkAngle) * 10 + 20;
+
+    // Rotacja głowy
+    HeadAngleY = Math.sin(walkAngle) * 20;
+
+    // Przesuwanie robota do przodu i do tyłu
+    moveDistance += walkDirection * 0.01;
+    if (moveDistance > 1 || moveDistance < -1) {
+      walkDirection *= -1;
+    }
+    BodyPositionZ += walkDirection * 0.01;
+    HeadPositionZ += walkDirection * 0.01;
+    LeftUpperArmPositionZ += walkDirection * 0.01;
+    RightUpperArmPositionZ += walkDirection * 0.01;
+    LeftUpperLegPositionZ += walkDirection * 0.01;
+    RightUpperLegPositionZ += walkDirection * 0.01;
+
+    walkAngle += 0.1;
+  }
+  requestAnimationFrame(animateWalk);
 }
+
+
+
+function handleKeyDown(e) {
+  if(e.keyCode == 87) angleX = angleX + 5.0; // W
+  if(e.keyCode == 83) angleX = angleX - 5.0; // S
+  if(e.keyCode == 68) angleY = angleY + 5.0; // D
+  if(e.keyCode == 65) angleY = angleY - 5.0; // A
+  if(e.keyCode == 81) angleZ = angleZ + 5.0; // Q
+  if(e.keyCode == 69) angleZ = angleZ - 5.0; // E
+
+  if(e.keyCode == 76) LightPositionX = LightPositionX + 0.1; // L
+  if(e.keyCode == 74) LightPositionX = LightPositionX - 0.1; // J
+  if(e.keyCode == 73) LightPositionY = LightPositionY + 0.1; // I
+  if(e.keyCode == 75) LightPositionY = LightPositionY - 0.1; // K
+  if(e.keyCode == 85) LightPositionZ = LightPositionZ + 0.1; // U
+  if(e.keyCode == 79) LightPositionZ = LightPositionZ - 0.1; // O
+
+  if(e.keyCode == 67) Object2AngleZ = Object2AngleZ - 0.1; // C
+  if(e.keyCode == 86) Object2AngleZ = Object2AngleZ + 0.1; // V
+
+  if(e.keyCode == 66) Object3AngleZ = Object3AngleZ - 0.1; // B
+  if(e.keyCode == 78) Object3AngleZ = Object3AngleZ + 0.1; // N
+  
+  if(e.keyCode == 80) isWalking = !isWalking; // P - Animacja chodzenia
+}
+
+
+
 </script>
 </head>
 <body onload="startGL()" onkeydown="handlekeydown(event)">
-<canvas id="canvas3D" width="640" height="480" style="border: solid black 1px">;</canvas>;
+<canvas id="canvas3D" width="640" height="480" style="border: solid black 1px">;</canvas>
 </body>
 </html>
